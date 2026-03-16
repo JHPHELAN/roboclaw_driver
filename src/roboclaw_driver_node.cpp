@@ -768,9 +768,9 @@ void RoboClawDriverNode::decodeErrorStatus(uint32_t error_status, char* buffer, 
   if (error_status & static_cast<uint32_t>(RoboClaw::RoboClawError::ERROR_MBATHIGH))
     append_error("Main Voltage High Error");
   if (error_status & static_cast<uint32_t>(RoboClaw::RoboClawError::ERROR_LBATHIGH))
-    append_error("Logic Voltage High Error");
+    append_error("Logic Voltage High Error(?)");
   if (error_status & static_cast<uint32_t>(RoboClaw::RoboClawError::ERROR_LBATLOW))
-    append_error("Logic Voltage Low Error");
+    append_error("Logic Voltage Low Error(?)");
   if (error_status & static_cast<uint32_t>(RoboClaw::RoboClawError::ERROR_FAULTM1))
     append_error("M1 Driver Fault");
   if (error_status & static_cast<uint32_t>(RoboClaw::RoboClawError::ERROR_FAULTM2))
