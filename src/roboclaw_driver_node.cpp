@@ -573,6 +573,20 @@ void RoboClawDriverNode::publish_status() {
   // RCUTILS_LOG_INFO( "RoboClaw Status: %s",
   // json_status.c_str());
   status_pub_->publish(std_msgs::msg::String().set__data(json_status));
+
+  // Log warnings for non-zero error status (visible without do_debug)
+  // E-Stop alone (0x01) is configurable and may not indicate a real problem
+  uint32_t status_excluding_estop =
+      roboclaw_state_.error_status &
+      ~static_cast<uint32_t>(RoboClaw::RoboClawError::ERROR_ESTOP);
+  if (status_excluding_estop != 0) {
+    RCUTILS_LOG_WARN("RoboClaw ERROR: 0x%08X [%s] currents: M1=%.2fA M2=%.2fA",
+                     roboclaw_state_.error_status, decoded_error_status,
+                     roboclaw_state_.motorCurrents.m1Current,
+                     roboclaw_state_.motorCurrents.m2Current);
+  } else if (roboclaw_state_.error_status != 0) {
+    RCUTILS_LOG_INFO_ONCE("RoboClaw E-Stop bit set (0x01) - configurable, not necessarily an error");
+  }
 }
 
 double RoboClawDriverNode::normalize_angle(double angle) {
@@ -744,62 +758,60 @@ void RoboClawDriverNode::decodeErrorStatus(uint32_t error_status, char* buffer, 
     }
   };
 
-  // Check error flags (bits 0-15)
+  // Check error flags (bits 0-13) per Command 90 - Read Status
   if (error_status & static_cast<uint32_t>(RoboClaw::RoboClawError::ERROR_ESTOP))
-    append_error("ERROR_ESTOP");
+    append_error("E-Stop");
   if (error_status & static_cast<uint32_t>(RoboClaw::RoboClawError::ERROR_TEMP))
-    append_error("ERROR_TEMP");
+    append_error("Temperature Error");
   if (error_status & static_cast<uint32_t>(RoboClaw::RoboClawError::ERROR_TEMP2))
-    append_error("ERROR_TEMP2");
+    append_error("Temperature 2 Error");
+  if (error_status & static_cast<uint32_t>(RoboClaw::RoboClawError::ERROR_MBATHIGH))
+    append_error("Main Voltage High Error");
   if (error_status & static_cast<uint32_t>(RoboClaw::RoboClawError::ERROR_LBATHIGH))
-    append_error("ERROR_LBATHIGH");
+    append_error("Logic Voltage High Error");
   if (error_status & static_cast<uint32_t>(RoboClaw::RoboClawError::ERROR_LBATLOW))
-    append_error("ERROR_LBATLOW");
+    append_error("Logic Voltage Low Error");
   if (error_status & static_cast<uint32_t>(RoboClaw::RoboClawError::ERROR_FAULTM1))
-    append_error("ERROR_FAULTM1");
+    append_error("M1 Driver Fault");
   if (error_status & static_cast<uint32_t>(RoboClaw::RoboClawError::ERROR_FAULTM2))
-    append_error("ERROR_FAULTM2");
+    append_error("M2 Driver Fault");
   if (error_status & static_cast<uint32_t>(RoboClaw::RoboClawError::ERROR_SPEED1))
-    append_error("ERROR_SPEED1");
+    append_error("M1 Speed Error");
   if (error_status & static_cast<uint32_t>(RoboClaw::RoboClawError::ERROR_SPEED2))
-    append_error("ERROR_SPEED2");
+    append_error("M2 Speed Error");
   if (error_status & static_cast<uint32_t>(RoboClaw::RoboClawError::ERROR_POS1))
-    append_error("ERROR_POS1");
+    append_error("M1 Position Error");
   if (error_status & static_cast<uint32_t>(RoboClaw::RoboClawError::ERROR_POS2))
-    append_error("ERROR_POS2");
+    append_error("M2 Position Error");
   if (error_status & static_cast<uint32_t>(RoboClaw::RoboClawError::ERROR_CURRENTM1))
-    append_error("ERROR_CURRENTM1");
+    append_error("M1 Current Error");
   if (error_status & static_cast<uint32_t>(RoboClaw::RoboClawError::ERROR_CURRENTM2))
-    append_error("ERROR_CURRENTM2");
+    append_error("M2 Current Error");
 
-  // Check warning flags (bits 16-31)
+  // Check warning flags (bits 16-25)
   if (error_status & static_cast<uint32_t>(RoboClaw::RoboClawError::WARN_OVERCURRENTM1))
-    append_error("WARN_OVERCURRENTM1");
+    append_error("M1 Over Current Warning");
   if (error_status & static_cast<uint32_t>(RoboClaw::RoboClawError::WARN_OVERCURRENTM2))
-    append_error("WARN_OVERCURRENTM2");
+    append_error("M2 Over Current Warning");
   if (error_status & static_cast<uint32_t>(RoboClaw::RoboClawError::WARN_MBATHIGH))
-    append_error("WARN_MBATHIGH");
+    append_error("Main Voltage High Warning");
   if (error_status & static_cast<uint32_t>(RoboClaw::RoboClawError::WARN_MBATLOW))
-    append_error("WARN_MBATLOW");
+    append_error("Main Voltage Low Warning");
   if (error_status & static_cast<uint32_t>(RoboClaw::RoboClawError::WARN_TEMP))
-    append_error("WARN_TEMP");
+    append_error("Temperature Warning");
   if (error_status & static_cast<uint32_t>(RoboClaw::RoboClawError::WARN_TEMP2))
-    append_error("WARN_TEMP2");
+    append_error("Temperature 2 Warning");
   if (error_status & static_cast<uint32_t>(RoboClaw::RoboClawError::WARN_S4))
-    append_error("WARN_S4");
+    append_error("S4 Signal Triggered");
   if (error_status & static_cast<uint32_t>(RoboClaw::RoboClawError::WARN_S5))
-    append_error("WARN_S5");
-  if (error_status & static_cast<uint32_t>(RoboClaw::RoboClawError::WARN_CAN))
-    append_error("WARN_CAN");
-  if (error_status & static_cast<uint32_t>(RoboClaw::RoboClawError::WARN_BOOT))
-    append_error("WARN_BOOT");
-  if (error_status & static_cast<uint32_t>(RoboClaw::RoboClawError::WARN_OVERREGENM1))
-    append_error("WARN_OVERREGENM1");
-  if (error_status & static_cast<uint32_t>(RoboClaw::RoboClawError::WARN_OVERREGENM2))
-    append_error("WARN_OVERREGENM2");
+    append_error("S5 Signal Triggered");
+  if (error_status & static_cast<uint32_t>(RoboClaw::RoboClawError::WARN_SPEED_ERROR_LIMIT))
+    append_error("Speed Error Limit Warning");
+  if (error_status & static_cast<uint32_t>(RoboClaw::RoboClawError::WARN_POS_ERROR_LIMIT))
+    append_error("Position Error Limit Warning");
 
   // Report any unknown bits
-  uint32_t known_errors = 0xF000EFFF;  // All defined error and warning bits
+  uint32_t known_errors = 0x03FF3FFF;  // All defined error and warning bits per manual
   uint32_t unknown_errors = error_status & ~known_errors;
   if (unknown_errors != 0) {
     if (current_len < size - 1 && !first) {

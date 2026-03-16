@@ -167,36 +167,36 @@ class RoboClaw {
     FLAGBOOTLOADER = 255
   };  // Only available via USB communications
 
-  // RoboClaw error status bit definitions (complete specification)
+  // RoboClaw error status bit definitions per Command 90 - Read Status
+  // Reference: RoboClaw Series User Manual (roboclaw_user_manual.pdf)
   enum class RoboClawError : uint32_t {
-    // Error flags (bits 0-15)
-    ERROR_ESTOP = 0x00000001,      ///< Emergency stop triggered
-    ERROR_TEMP = 0x00000002,       ///< Temperature fault
-    ERROR_TEMP2 = 0x00000004,      ///< Secondary temperature fault
-    ERROR_LBATHIGH = 0x00000010,   ///< Logic battery voltage too high
-    ERROR_LBATLOW = 0x00000020,    ///< Logic battery voltage too low
-    ERROR_FAULTM1 = 0x00000040,    ///< Motor 1 driver fault
-    ERROR_FAULTM2 = 0x00000080,    ///< Motor 2 driver fault
-    ERROR_SPEED1 = 0x00000100,     ///< Motor 1 speed error
-    ERROR_SPEED2 = 0x00000200,     ///< Motor 2 speed error
-    ERROR_POS1 = 0x00000400,       ///< Motor 1 position error
-    ERROR_POS2 = 0x00000800,       ///< Motor 2 position error
-    ERROR_CURRENTM1 = 0x00001000,  ///< Motor 1 current error
-    ERROR_CURRENTM2 = 0x00002000,  ///< Motor 2 current error
+    // Error flags (bits 0-13)
+    ERROR_ESTOP = 0x00000001,      ///< E-Stop (configurable, may not indicate a problem)
+    ERROR_TEMP = 0x00000002,       ///< Temperature Error
+    ERROR_TEMP2 = 0x00000004,      ///< Temperature 2 Error
+    ERROR_MBATHIGH = 0x00000008,   ///< Main Voltage High Error
+    ERROR_LBATHIGH = 0x00000010,   ///< Logic Voltage High Error
+    ERROR_LBATLOW = 0x00000020,    ///< Logic Voltage Low Error
+    ERROR_FAULTM1 = 0x00000040,    ///< M1 Driver Fault Error
+    ERROR_FAULTM2 = 0x00000080,    ///< M2 Driver Fault Error
+    ERROR_SPEED1 = 0x00000100,     ///< M1 Speed Error
+    ERROR_SPEED2 = 0x00000200,     ///< M2 Speed Error
+    ERROR_POS1 = 0x00000400,       ///< M1 Position Error
+    ERROR_POS2 = 0x00000800,       ///< M2 Position Error
+    ERROR_CURRENTM1 = 0x00001000,  ///< M1 Current Error
+    ERROR_CURRENTM2 = 0x00002000,  ///< M2 Current Error
 
-    // Warning flags (bits 16-31)
-    WARN_OVERCURRENTM1 = 0x00010000,  ///< Motor 1 overcurrent warning
-    WARN_OVERCURRENTM2 = 0x00020000,  ///< Motor 2 overcurrent warning
-    WARN_MBATHIGH = 0x00040000,       ///< Main battery voltage too high warning
-    WARN_MBATLOW = 0x00080000,        ///< Main battery voltage too low warning
-    WARN_TEMP = 0x00100000,           ///< Temperature warning
-    WARN_TEMP2 = 0x00200000,          ///< Secondary temperature warning
-    WARN_S4 = 0x00400000,             ///< S4 signal warning
-    WARN_S5 = 0x00800000,             ///< S5 signal warning
-    WARN_CAN = 0x10000000,            ///< CAN communication warning (MCP models only)
-    WARN_BOOT = 0x20000000,           ///< Boot mode warning
-    WARN_OVERREGENM1 = 0x40000000,    ///< Motor 1 over-regeneration warning
-    WARN_OVERREGENM2 = 0x80000000     ///< Motor 2 over-regeneration warning
+    // Warning flags (bits 16-25)
+    WARN_OVERCURRENTM1 = 0x00010000,  ///< M1 Over Current Warning
+    WARN_OVERCURRENTM2 = 0x00020000,  ///< M2 Over Current Warning
+    WARN_MBATHIGH = 0x00040000,       ///< Main Voltage High Warning
+    WARN_MBATLOW = 0x00080000,        ///< Main Voltage Low Warning
+    WARN_TEMP = 0x00100000,           ///< Temperature Warning
+    WARN_TEMP2 = 0x00200000,          ///< Temperature 2 Warning
+    WARN_S4 = 0x00400000,             ///< S4 Signal Triggered
+    WARN_S5 = 0x00800000,             ///< S5 Signal Triggered
+    WARN_SPEED_ERROR_LIMIT = 0x01000000,  ///< Speed Error Limit Warning
+    WARN_POS_ERROR_LIMIT = 0x02000000     ///< Position Error Limit Warning
   };
 
   // public methods
