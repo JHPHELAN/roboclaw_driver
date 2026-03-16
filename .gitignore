@@ -1,4 +1,6 @@
 build/
+install/
+log/
 test_intellisense
 test_includes.cpp
 src/test_intellisense.cpp

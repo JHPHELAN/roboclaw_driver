@@ -18,7 +18,7 @@
 
 #include <atomic>
 #include <chrono>
-#include <geometry_msgs/msg/twist.hpp>
+#include <geometry_msgs/msg/twist_stamped.hpp>
 #include <memory>
 #include <mutex>
 #include <nav_msgs/msg/odometry.hpp>
@@ -51,7 +51,7 @@ class RoboClawDriverNode : public rclcpp::Node {
   void main_loop();
 
   /** @brief Callback for incoming velocity commands */
-  void cmd_vel_callback(const geometry_msgs::msg::Twist::SharedPtr msg);
+  void cmd_vel_callback(const geometry_msgs::msg::TwistStamped::SharedPtr msg);
 
   /** @brief Decode RoboClaw error status bits into human-readable strings */
   void decodeErrorStatus(uint32_t error_status, char* buffer, size_t size) const;
@@ -120,7 +120,7 @@ class RoboClawDriverNode : public rclcpp::Node {
   std::unique_ptr<RoboClaw> roboclaw_;  ///< Interface to RoboClaw motor controller
 
   // ROS2 communication
-  rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr
+  rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr
       cmd_vel_sub_;                                                 ///< Velocity command subscriber
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;  ///< Odometry publisher
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr
