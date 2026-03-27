@@ -366,8 +366,14 @@ void RoboClaw::restartPort() {
 }
 
 void RoboClaw::stop() {
-  CmdDoBufferedM1M2DriveSpeedAccelDistance stopCommand(*this, 3000, 0, 0, 0, 0);
-  stopCommand.execute();
+  // Send duty=0 (open-loop off) instead of speed=0 (closed-loop hold)
+  // Speed=0 keeps PID active, which can cause oscillation after node death
+  // MIXEDDUTY takes two 16-bit duty values: (high_byte, low_byte) for each motor
+  try {
+    writeN2(6, portAddress_, MIXEDDUTY, (uint8_t)0, (uint8_t)0, (uint8_t)0, (uint8_t)0);
+  } catch (...) {
+    RCUTILS_LOG_ERROR("[RoboClaw::stop] Failed to send duty=0 stop command");
+  }
 }
 
 void RoboClaw::updateCrc(uint16_t &crc, uint8_t data) {

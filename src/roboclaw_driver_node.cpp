@@ -25,6 +25,7 @@
 #include "roboclaw_driver/roboclaw_cmd_read_status.h"
 #include "roboclaw_driver/roboclaw_cmd_read_temperature.h"
 #include "roboclaw_driver/roboclaw_cmd_set_encoder_value.h"
+#include "roboclaw_driver/roboclaw_cmd_set_logic_battery_voltages.h"
 #include "roboclaw_driver/roboclaw_cmd_set_pid.h"
 
 using namespace std::chrono_literals;
@@ -173,6 +174,14 @@ bool RoboClawDriverNode::initialize_roboclaw() {
   command_m1_pid.execute();
   CmdSetPid command_m2_pid(*roboclaw_, RoboClaw::kM2, m2_p_, m2_i_, m2_d_, m2_qpps_);
   command_m2_pid.execute();
+
+  // Set logic battery voltage limits to prevent spurious errors.
+  // The RoboClaw 2x7a has an internal logic voltage regulator (~3.3V).
+  // Factory defaults of min=5.5V, max=5.5V cause false "Logic Voltage High" errors.
+  // Setting min=0V (0), max=14.0V (140) accommodates the actual regulator output.
+  CmdSetLogicBatteryVoltages cmd_logic_voltages(*roboclaw_, 0, 140);
+  cmd_logic_voltages.execute();
+  RCUTILS_LOG_INFO("Set logic battery voltage limits: min=0.0V, max=14.0V");
 
   // Reset encoder counts to establish known starting position
   CmdSetEncoderValue m1(*roboclaw_, RoboClaw::kM1, 0);

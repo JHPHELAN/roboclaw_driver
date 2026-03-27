@@ -14,6 +14,7 @@
 #include <sstream>
 #include <string>
 
+#define SetWORDval(arg) (uint8_t)(((uint32_t)arg) >> 8), (uint8_t)arg
 #define SetDWORDval(arg) \
   (uint8_t)(arg >> 24), (uint8_t)(arg >> 16), (uint8_t)(arg >> 8), (uint8_t)arg
 
@@ -462,6 +463,7 @@ class RoboClaw {
   friend class CmdReadStatus;
   friend class CmdReadTemperature;
   friend class CmdSetEncoderValue;
+  friend class CmdSetLogicBatteryVoltages;
   friend class CmdSetSerialTimeout;
   friend class CmdSetPid;
 
