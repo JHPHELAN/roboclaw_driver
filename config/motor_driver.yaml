@@ -88,6 +88,21 @@ roboclaw_driver:
     m2_qpps: 2437                         # Maximum quadrature pulses per second
 
     # ============================================================================
+    # MAIN BATTERY VOLTAGE CALIBRATION
+    # ============================================================================
+    # RoboClaw firmware exposes no user calibration for the main-battery
+    # reading; individual boards can show a fixed additive or multiplicative
+    # error vs a bench voltmeter. The driver applies:
+    #   reported = raw/10.0 * main_battery_scale + main_battery_offset
+    # Defaults preserve original behavior (scale=1.0, offset=0.0). To calibrate,
+    # sweep the RoboClaw with a bench PSU across your operating range, log the
+    # true bus voltage (voltmeter) vs the reported value, then fit a linear
+    # model. In practice the error is often a pure additive offset (unit
+    # slope) — try offset-only first.
+    main_battery_scale: 1.0
+    main_battery_offset: 0.0
+
+    # ============================================================================
     # MOTOR ACCELERATION SETTINGS
     # ============================================================================
     accel: 3000                           # Motor acceleration in encoder counts per second squared

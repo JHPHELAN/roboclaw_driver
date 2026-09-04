@@ -175,6 +175,10 @@ class RoboClawDriverNode : public rclcpp::Node {
   bool do_debug_;
   bool do_low_level_debug_;
 
+  // Main battery voltage calibration: reported = raw/10.0 * scale + offset
+  double main_battery_scale_{1.0};
+  double main_battery_offset_{0.0};
+
   // State variables
   struct {
     geometry_msgs::msg::Twist cmd_vel;
