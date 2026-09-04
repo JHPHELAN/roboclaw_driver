@@ -100,7 +100,7 @@ RoboClawDriverNode::RoboClawDriverNode()
   }
 
   // Initialize ROS2 publishers and subscribers based on configuration
-  cmd_vel_sub_ = this->create_subscription<geometry_msgs::msg::Twist>(
+  cmd_vel_sub_ = this->create_subscription<geometry_msgs::msg::TwistStamped>(
       "cmd_vel", 1, std::bind(&RoboClawDriverNode::cmd_vel_callback, this, std::placeholders::_1));
 
   // Create publishers conditionally based on configuration
@@ -231,14 +231,14 @@ void RoboClawDriverNode::main_loop() {
  * Thread-safe storage of cmd_vel messages with timestamp and sequence tracking.
  * Commands are processed in the main loop to maintain timing consistency.
  *
- * @param msg Twist message containing linear and angular velocity commands
+ * @param msg TwistStamped message containing linear and angular velocity commands
  */
-void RoboClawDriverNode::cmd_vel_callback(const geometry_msgs::msg::Twist::SharedPtr msg) {
+void RoboClawDriverNode::cmd_vel_callback(const geometry_msgs::msg::TwistStamped::SharedPtr msg) {
   static rclcpp::Time time_of_last_cmd_vel = this->get_clock()->now();
 
   // Thread-safe update of command cache
   std::lock_guard<std::mutex> lock(last_cmd_vel_.mutex);
-  last_cmd_vel_.cmd_vel = *msg;
+  last_cmd_vel_.cmd_vel = msg->twist;
   last_cmd_vel_.sequence_number++;
   last_cmd_vel_.timestamp = this->get_clock()->now();
 }
