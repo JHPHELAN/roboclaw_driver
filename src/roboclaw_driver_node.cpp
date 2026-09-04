@@ -76,6 +76,8 @@ RoboClawDriverNode::RoboClawDriverNode()
   RCUTILS_LOG_INFO("m2_i: %.6f", m2_i_);
   RCUTILS_LOG_INFO("m2_p: %.6f", m2_p_);
   RCUTILS_LOG_INFO("m2_qpps: %d", m2_qpps_);
+  RCUTILS_LOG_INFO("main_battery_scale: %.6f", main_battery_scale_);
+  RCUTILS_LOG_INFO("main_battery_offset: %.6f", main_battery_offset_);
   RCUTILS_LOG_INFO("max_angular_velocity: %.1f", max_angular_velocity_);
   RCUTILS_LOG_INFO("max_linear_velocity: %.1f", max_linear_velocity_);
   RCUTILS_LOG_INFO("max_seconds_uncommanded_travel: %.3f", max_seconds_uncommanded_travel_);
@@ -358,6 +360,8 @@ void RoboClawDriverNode::read_sensors() {
         cmd_logic_batt.execute();
         CmdReadMainBatteryVoltage cmd_main_batt(*roboclaw_, roboclaw_state_.main_battery_voltage);
         cmd_main_batt.execute();
+        roboclaw_state_.main_battery_voltage =
+            roboclaw_state_.main_battery_voltage * main_battery_scale_ + main_battery_offset_;
       } break;
 
       case READ_TEMPERATURES: {
@@ -604,6 +608,8 @@ void RoboClawDriverNode::declare_parameters() {
   this->declare_parameter("m2_i", 2.43);
   this->declare_parameter("m2_p", 7.26239);
   this->declare_parameter("m2_qpps", 2437);
+  this->declare_parameter("main_battery_scale", 1.0);
+  this->declare_parameter("main_battery_offset", 0.0);
   this->declare_parameter("max_angular_velocity",
                           0.07);  // Match config file default
   this->declare_parameter("max_linear_velocity",
@@ -644,6 +650,8 @@ void RoboClawDriverNode::load_parameters() {
   m2_i_ = this->get_parameter_or("m2_i", 2.43);
   m2_p_ = this->get_parameter_or("m2_p", 7.26239);
   m2_qpps_ = this->get_parameter_or("m2_qpps", static_cast<uint32_t>(2437));
+  main_battery_scale_ = this->get_parameter_or("main_battery_scale", 1.0);
+  main_battery_offset_ = this->get_parameter_or("main_battery_offset", 0.0);
   max_angular_velocity_ = this->get_parameter_or("max_angular_velocity", 0.07);
   max_linear_velocity_ = this->get_parameter_or("max_linear_velocity", 0.3);
   max_seconds_uncommanded_travel_ = this->get_parameter_or("max_seconds_uncommanded_travel", 0.2);
