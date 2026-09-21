@@ -1,3 +1,8 @@
+#
+# See https://github.com/wimblerobotics/roboclaw_driver/blob/main/config/motor_driver.yaml
+#
+
+# motor_driver_node:
 roboclaw_driver:
   ros__parameters:
     # ============================================================================
@@ -7,9 +12,11 @@ roboclaw_driver:
                                           # Common values: /dev/ttyUSB0, /dev/ttyAMA0, /dev/ttyACM0
                                           # Use 'ls /dev/tty*' to find your device
     
-    baud_rate: 230400                     # Serial communication baud rate
+    baud_rate: 115200                     # Serial communication baud rate
                                           # Must match RoboClaw configuration! 
                                           # Common values: 38400, 115200, 230400
+
+    device_port: 128
                                           
     device_timeout: 100                   # Command timeout in milliseconds
                                           # How long to wait for RoboClaw responses
@@ -17,31 +24,39 @@ roboclaw_driver:
     # ============================================================================
     # PUBLISHING RATES (Hz) - Controls how often data is published
     # ============================================================================
-    odometry_rate: 67.0                   # Rate for publishing odometry data
+    # odometry_rate: 67.0                   # Rate for publishing odometry data
                                           # Higher = more frequent position updates
                                           # TeensyV2 compatible default: 67.0
                                           
-    joint_states_rate: 30.0               # Rate for publishing wheel joint states  
+    # joint_states_rate: 30.0               # Rate for publishing wheel joint states  
                                           # Used by robot_state_publisher and rviz
-                                          
-    status_rate: 10.0                     # Rate for reading and publishing status information
-                                          # Includes motor currents, temperature, battery voltage
+
+    # status_rate: 10.0                     
+    sensor_update_rate: 10.0              # Rate for reading sensors and publishing odom/joint_states
+                                          # Was 20.0 — reduced to halve serial bus load (115200 baud)
 
     # ============================================================================
     # ROBOT PHYSICAL PARAMETERS - CRITICAL: MEASURE YOUR ROBOT CAREFULLY!
     # ============================================================================
-    wheel_radius: 0.051112072             # Wheel radius in meters
+    wheel_radius: 0.0615                  # Wheel radius in meters
                                           # ⚠️  MEASURE THIS PRECISELY! Affects odometry accuracy
                                           # Measure from wheel center to contact point with ground
                                           
-    wheel_separation: 0.3906              # Distance between wheel centers in meters  
+    wheel_separation: 0.26                # Distance between wheel centers in meters  
                                           # ⚠️  MEASURE THIS PRECISELY! Affects turning accuracy
                                           # Measure center-to-center distance between drive wheels
                                           
-    encoder_counts_per_revolution: 1000   # Total encoder counts per wheel revolution
+    encoder_counts_per_revolution: 3200   # Total encoder counts per wheel revolution
                                           # ⚠️  CHECK YOUR ENCODER SPECS! Critical for speed/position
                                           # For quadrature encoders: 4 × (pulses per revolution)
                                           # Example: 250 PPR encoder = 1000 counts/rev
+    quad_pulses_per_revolution: 3200.0
+
+    # Based upon your particular motor gearing and encoders.
+    # These values are used to scale cmd_vel commands
+    # and encoder values to motor commands and odometry, respectfully.
+    quad_pulses_per_meter: 8226
+
 
     # ============================================================================
     # ROS FRAME NAMES - For TF tree and coordinate systems
@@ -59,9 +74,9 @@ roboclaw_driver:
                                           # Clamps angular velocity commands for safety
                                           # Start conservative, increase as needed
                                           
-    max_linear_velocity: 0.3              # Maximum forward/backward speed (meters/second)
+    max_linear_velocity: 0.5              # Maximum forward/backward speed (meters/second)
                                           # Clamps linear velocity commands for safety  
-                                          # Start conservative, increase as needed
+                                          # Was 0.3, raised for turbo joystick mode
 
     max_seconds_uncommanded_travel: 0.05   # Maximum time to allow robot to travel without receiving new commands
                                           # Safety timeout: motors stop if no cmd_vel for this duration
@@ -75,17 +90,29 @@ roboclaw_driver:
     # Start with manufacturer recommendations, then fine-tune for performance
     
     # Motor 1 (typically left wheel)
-    m1_p: 7.26239                         # Proportional gain - higher = more aggressive response
-    m1_i: 2.43                            # Integral gain - eliminates steady-state error  
+    m1_p: 1.11107                         # Proportional gain - higher = more aggressive response
+    m1_i: 0.15842                            # Integral gain - eliminates steady-state error  
     m1_d: 0.0                             # Derivative gain - reduces overshoot
-    m1_qpps: 2437                         # Maximum quadrature pulses per second
+    m1_qpps: 17625                        # Maximum quadrature pulses per second
+    m1_max_current: 2.7
                                           # Should match your motor's maximum speed capability
     
     # Motor 2 (typically right wheel)  
-    m2_p: 7.26239                         # Proportional gain
-    m2_i: 2.43                            # Integral gain
+    m2_p: 1.05771                        # Proportional gain
+    m2_i: 0.16649                         # Integral gain
     m2_d: 0.0                             # Derivative gain  
-    m2_qpps: 2437                         # Maximum quadrature pulses per second
+    m2_qpps: 18187                        # Maximum quadrature pulses per second
+    m2_max_current: 2.7
+
+    # ============================================================================
+    # MAIN BATTERY VOLTAGE CALIBRATION
+    # ============================================================================
+    # RoboClaw firmware has no user calibration for the main-battery reading;
+    # this driver applies:  reported = raw/10.0 * main_battery_scale + main_battery_offset
+    # Bench cal 2026-09-04 (8-point sweep, bus voltmeter vs driver): pure additive
+    # offset of ~-1.525 V, unit slope. Residuals ±0.005 V (readback quantum floor).
+    main_battery_scale: 1.0
+    main_battery_offset: -1.525
 
     # ============================================================================
     # MAIN BATTERY VOLTAGE CALIBRATION
@@ -105,7 +132,7 @@ roboclaw_driver:
     # ============================================================================
     # MOTOR ACCELERATION SETTINGS
     # ============================================================================
-    accel: 3000                           # Motor acceleration in encoder counts per second squared
+    accel_quad_pulses_per_second: 1000    # Motor acceleration in encoder counts per second squared
                                           # Higher = faster acceleration, but may cause wheel slip
                                           # Lower = smoother but slower acceleration
 
@@ -120,13 +147,13 @@ roboclaw_driver:
                                           # Set to true for navigation stack integration
                                           # Requires publish_odom: true
                                           
-    publish_joint_states: false           # Publish wheel joint states (/joint_states topic)
+    publish_joint_states: true           # Publish wheel joint states (/joint_states topic)
                                           # Set to true for robot_state_publisher and visualization
 
     # ============================================================================
     # DEBUGGING CONTROL - Enable for troubleshooting
     # ============================================================================
-    do_debug: true                       # True => Log RoboClaw commands and responses
+    do_debug: false                      # True => Log RoboClaw commands and responses
                                           # Enable to see detailed communication info
                                           # Useful for troubleshooting communication issues
                                           
