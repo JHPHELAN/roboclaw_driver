@@ -358,10 +358,15 @@ void RoboClawDriverNode::read_sensors() {
         CmdReadLogicBatteryVoltage cmd_logic_batt(*roboclaw_,
                                                   roboclaw_state_.logic_battery_voltage);
         cmd_logic_batt.execute();
-        CmdReadMainBatteryVoltage cmd_main_batt(*roboclaw_, roboclaw_state_.main_battery_voltage);
+        float raw_main_battery_voltage = 0.0f;
+        bool main_battery_read_successful = false;
+        CmdReadMainBatteryVoltage cmd_main_batt(*roboclaw_, raw_main_battery_voltage,
+                                                main_battery_read_successful);
         cmd_main_batt.execute();
-        roboclaw_state_.main_battery_voltage =
-            roboclaw_state_.main_battery_voltage * main_battery_scale_ + main_battery_offset_;
+        if (main_battery_read_successful) {
+          roboclaw_state_.main_battery_voltage =
+              raw_main_battery_voltage * main_battery_scale_ + main_battery_offset_;
+        }
       } break;
 
       case READ_TEMPERATURES: {

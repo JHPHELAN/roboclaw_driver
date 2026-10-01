@@ -8,13 +8,17 @@
 
 class CmdReadMainBatteryVoltage : public Cmd {
  public:
-  CmdReadMainBatteryVoltage(RoboClaw &roboclaw, float &voltage)
-      : Cmd(roboclaw, "ReadLMainBatteryVoltage", RoboClaw::kNone), voltage_(voltage) {}
+  CmdReadMainBatteryVoltage(RoboClaw &roboclaw, float &voltage, bool &read_successful)
+      : Cmd(roboclaw, "ReadLMainBatteryVoltage", RoboClaw::kNone),
+        voltage_(voltage),
+        read_successful_(read_successful) {}
   void send() override {
+    read_successful_ = false;
     try {
       roboclaw_.appendToWriteLog("CmdReadMainBatteryVoltage: WROTE: ");
       float result = ((float)roboclaw_.get2ByteCommandResult2(RoboClaw::GETMBATT)) / 10.0;
       voltage_ = result;
+      read_successful_ = true;
       roboclaw_.appendToReadLog(", RESULT: %f", result);
       return;
     } catch (...) {
@@ -24,4 +28,5 @@ class CmdReadMainBatteryVoltage : public Cmd {
 
  private:
   float &voltage_;
+  bool &read_successful_;
 };
