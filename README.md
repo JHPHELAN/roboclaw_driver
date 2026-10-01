@@ -79,6 +79,7 @@ roboclaw_driver:
     # SERIAL CONNECTION - UPDATE FOR YOUR SETUP
     device_name: "/dev/ttyUSB0"            # Your RoboClaw device path
     baud_rate: 230400                      # Match your RoboClaw settings
+      use_stamped_cmd_vel: false             # Set true if /cmd_vel publishes geometry_msgs/msg/TwistStamped
 ```
 
 ### 4. Launch the Driver
@@ -112,6 +113,12 @@ device_name: "/dev/ttyUSB0"           # Serial device path for RoboClaw
 baud_rate: 230400                     # Serial communication speed (must match RoboClaw setting)
 device_timeout: 100                   # Command timeout in milliseconds
 ```
+
+### Velocity Command Type
+```yaml
+use_stamped_cmd_vel: false            # false: geometry_msgs/msg/Twist; true: geometry_msgs/msg/TwistStamped
+```
+The driver subscribes to only the selected type on `/cmd_vel`. Configure this to match the publisher; the default preserves existing `Twist` publishers.
 
 ### Robot Physical Parameters ⚠️ **CRITICAL - MEASURE YOUR ROBOT**
 ```yaml
@@ -167,7 +174,7 @@ do_low_level_debug: false             # Enable low-level serial communication lo
 ## ROS2 Topics
 
 ### What Your Robot Listens To
-- **`/cmd_vel`** (geometry_msgs/Twist): Send velocity commands here to move your robot
+- **`/cmd_vel`** (`geometry_msgs/msg/Twist` by default, or `geometry_msgs/msg/TwistStamped` when `use_stamped_cmd_vel: true`): Send velocity commands here to move your robot
 
 ### What Your Robot Publishes
 - **`/odom`** (nav_msgs/Odometry): Robot position and velocity (if `publish_odom: true`)

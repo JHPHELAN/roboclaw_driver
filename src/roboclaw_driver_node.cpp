@@ -84,6 +84,7 @@ RoboClawDriverNode::RoboClawDriverNode()
   RCUTILS_LOG_INFO("publish_joint_states: %s", publish_joint_states_ ? "true" : "false");
   RCUTILS_LOG_INFO("publish_odom: %s", publish_odom_ ? "true" : "false");
   RCUTILS_LOG_INFO("publish_tf: %s", publish_tf_ ? "true" : "false");
+  RCUTILS_LOG_INFO("use_stamped_cmd_vel: %s", use_stamped_cmd_vel_ ? "true" : "false");
   RCUTILS_LOG_INFO("status_rate: %.1f", status_rate_);
   RCUTILS_LOG_INFO("wheel_radius: %.3f", wheel_radius_);
   RCUTILS_LOG_INFO("wheel_separation: %.3f", wheel_separation_);
@@ -100,8 +101,15 @@ RoboClawDriverNode::RoboClawDriverNode()
   }
 
   // Initialize ROS2 publishers and subscribers based on configuration
-  cmd_vel_sub_ = this->create_subscription<geometry_msgs::msg::TwistStamped>(
-      "cmd_vel", 1, std::bind(&RoboClawDriverNode::cmd_vel_callback, this, std::placeholders::_1));
+  if (use_stamped_cmd_vel_) {
+    cmd_vel_stamped_sub_ = this->create_subscription<geometry_msgs::msg::TwistStamped>(
+        "cmd_vel", 1,
+        std::bind(&RoboClawDriverNode::cmd_vel_stamped_callback, this, std::placeholders::_1));
+  } else {
+    cmd_vel_sub_ = this->create_subscription<geometry_msgs::msg::Twist>(
+        "cmd_vel", 1,
+        std::bind(&RoboClawDriverNode::cmd_vel_callback, this, std::placeholders::_1));
+  }
 
   // Create publishers conditionally based on configuration
   if (publish_odom_) {
@@ -231,14 +239,21 @@ void RoboClawDriverNode::main_loop() {
  * Thread-safe storage of cmd_vel messages with timestamp and sequence tracking.
  * Commands are processed in the main loop to maintain timing consistency.
  *
- * @param msg TwistStamped message containing linear and angular velocity commands
+ * @param msg Twist message containing linear and angular velocity commands
  */
-void RoboClawDriverNode::cmd_vel_callback(const geometry_msgs::msg::TwistStamped::SharedPtr msg) {
-  static rclcpp::Time time_of_last_cmd_vel = this->get_clock()->now();
+void RoboClawDriverNode::cmd_vel_callback(const geometry_msgs::msg::Twist::SharedPtr msg) {
+  cache_cmd_vel(*msg);
+}
 
+void RoboClawDriverNode::cmd_vel_stamped_callback(
+    const geometry_msgs::msg::TwistStamped::SharedPtr msg) {
+  cache_cmd_vel(msg->twist);
+}
+
+void RoboClawDriverNode::cache_cmd_vel(const geometry_msgs::msg::Twist& msg) {
   // Thread-safe update of command cache
   std::lock_guard<std::mutex> lock(last_cmd_vel_.mutex);
-  last_cmd_vel_.cmd_vel = msg->twist;
+  last_cmd_vel_.cmd_vel = msg;
   last_cmd_vel_.sequence_number++;
   last_cmd_vel_.timestamp = this->get_clock()->now();
 }
@@ -616,6 +631,7 @@ void RoboClawDriverNode::declare_parameters() {
                           false);                  // Match config file default
   this->declare_parameter("publish_odom", false);  // Match config file default
   this->declare_parameter("publish_tf", false);    // Match config file default
+  this->declare_parameter("use_stamped_cmd_vel", false);
   this->declare_parameter("status_rate", 10.0);
   this->declare_parameter("wheel_radius",
                           0.051112072);  // Match config file default
@@ -652,6 +668,7 @@ void RoboClawDriverNode::load_parameters() {
   publish_joint_states_ = this->get_parameter_or("publish_joint_states", false);
   publish_odom_ = this->get_parameter_or("publish_odom", false);
   publish_tf_ = this->get_parameter_or("publish_tf", false);
+  use_stamped_cmd_vel_ = this->get_parameter_or("use_stamped_cmd_vel", false);
   status_rate_ = this->get_parameter_or("status_rate", 10.0);
   wheel_radius_ = this->get_parameter_or("wheel_radius", 0.051112072);
   wheel_separation_ = this->get_parameter_or("wheel_separation", 0.3906);

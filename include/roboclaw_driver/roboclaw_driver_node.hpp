@@ -51,8 +51,10 @@ class RoboClawDriverNode : public rclcpp::Node {
   /** @brief Main control loop executed at fixed frequency */
   void main_loop();
 
-  /** @brief Callback for incoming velocity commands */
-  void cmd_vel_callback(const geometry_msgs::msg::TwistStamped::SharedPtr msg);
+  /** @brief Callbacks for incoming velocity commands */
+  void cmd_vel_callback(const geometry_msgs::msg::Twist::SharedPtr msg);
+  void cmd_vel_stamped_callback(const geometry_msgs::msg::TwistStamped::SharedPtr msg);
+  void cache_cmd_vel(const geometry_msgs::msg::Twist& msg);
 
   /** @brief Decode RoboClaw error status bits into human-readable strings */
   void decodeErrorStatus(uint32_t error_status, char* buffer, size_t size) const;
@@ -122,6 +124,8 @@ class RoboClawDriverNode : public rclcpp::Node {
 
   // ROS2 communication
   rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr
+      cmd_vel_stamped_sub_;                                         ///< Stamped velocity command subscriber
+  rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr
       cmd_vel_sub_;                                                 ///< Velocity command subscriber
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;  ///< Odometry publisher
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr
@@ -135,6 +139,7 @@ class RoboClawDriverNode : public rclcpp::Node {
   std::string device_name_;  ///< Serial device path (e.g., "/dev/ttyUSB0")
   int32_t baud_rate_;        ///< Serial communication baud rate
   int device_timeout_;       ///< Command timeout in milliseconds
+  bool use_stamped_cmd_vel_{false};
 
   // Publishing rates
   double odometry_rate_;
