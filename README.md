@@ -79,7 +79,6 @@ roboclaw_driver:
     # SERIAL CONNECTION - UPDATE FOR YOUR SETUP
     device_name: "/dev/ttyUSB0"            # Your RoboClaw device path
     baud_rate: 230400                      # Match your RoboClaw settings
-      use_stamped_cmd_vel: false             # Set true if /cmd_vel publishes geometry_msgs/msg/TwistStamped
 ```
 
 ### 4. Launch the Driver
