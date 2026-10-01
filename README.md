@@ -111,7 +111,10 @@ ros2 topic echo /roboclaw_status
 device_name: "/dev/ttyUSB0"           # Serial device path for RoboClaw
 baud_rate: 230400                     # Serial communication speed (must match RoboClaw setting)
 device_timeout: 100                   # Command timeout in milliseconds
+set_logic_battery_voltage_limits: false  # Set true only if your controller needs the 0-14V logic-voltage override
 ```
+
+When enabled, the driver sets the RoboClaw logic-voltage limits to 0-14 V at startup. Leave this disabled unless your controller requires the override; it can otherwise mask valid logic-voltage warnings.
 
 ### Robot Physical Parameters ⚠️ **CRITICAL - MEASURE YOUR ROBOT**
 ```yaml

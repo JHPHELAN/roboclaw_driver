@@ -85,6 +85,8 @@ RoboClawDriverNode::RoboClawDriverNode()
   RCUTILS_LOG_INFO("publish_joint_states: %s", publish_joint_states_ ? "true" : "false");
   RCUTILS_LOG_INFO("publish_odom: %s", publish_odom_ ? "true" : "false");
   RCUTILS_LOG_INFO("publish_tf: %s", publish_tf_ ? "true" : "false");
+  RCUTILS_LOG_INFO("set_logic_battery_voltage_limits: %s",
+                   set_logic_battery_voltage_limits_ ? "true" : "false");
   RCUTILS_LOG_INFO("status_rate: %.1f", status_rate_);
   RCUTILS_LOG_INFO("wheel_radius: %.3f", wheel_radius_);
   RCUTILS_LOG_INFO("wheel_separation: %.3f", wheel_separation_);
@@ -175,13 +177,11 @@ bool RoboClawDriverNode::initialize_roboclaw() {
   CmdSetPid command_m2_pid(*roboclaw_, RoboClaw::kM2, m2_p_, m2_i_, m2_d_, m2_qpps_);
   command_m2_pid.execute();
 
-  // Set logic battery voltage limits to prevent spurious errors.
-  // The RoboClaw 2x7a has an internal logic voltage regulator (~3.3V).
-  // Factory defaults of min=5.5V, max=5.5V cause false "Logic Voltage High" errors.
-  // Setting min=0V (0), max=14.0V (140) accommodates the actual regulator output.
-  CmdSetLogicBatteryVoltages cmd_logic_voltages(*roboclaw_, 0, 140);
-  cmd_logic_voltages.execute();
-  RCUTILS_LOG_INFO("Set logic battery voltage limits: min=0.0V, max=14.0V");
+  if (set_logic_battery_voltage_limits_) {
+    CmdSetLogicBatteryVoltages cmd_logic_voltages(*roboclaw_, 0, 140);
+    cmd_logic_voltages.execute();
+    RCUTILS_LOG_INFO("Set logic battery voltage limits: min=0.0V, max=14.0V");
+  }
 
   // Reset encoder counts to establish known starting position
   CmdSetEncoderValue m1(*roboclaw_, RoboClaw::kM1, 0);
@@ -639,6 +639,7 @@ void RoboClawDriverNode::declare_parameters() {
                           false);                  // Match config file default
   this->declare_parameter("publish_odom", false);  // Match config file default
   this->declare_parameter("publish_tf", false);    // Match config file default
+  this->declare_parameter("set_logic_battery_voltage_limits", false);
   this->declare_parameter("status_rate", 10.0);
   this->declare_parameter("wheel_radius",
                           0.051112072);  // Match config file default
@@ -675,6 +676,8 @@ void RoboClawDriverNode::load_parameters() {
   publish_joint_states_ = this->get_parameter_or("publish_joint_states", false);
   publish_odom_ = this->get_parameter_or("publish_odom", false);
   publish_tf_ = this->get_parameter_or("publish_tf", false);
+  set_logic_battery_voltage_limits_ =
+      this->get_parameter_or("set_logic_battery_voltage_limits", false);
   status_rate_ = this->get_parameter_or("status_rate", 10.0);
   wheel_radius_ = this->get_parameter_or("wheel_radius", 0.051112072);
   wheel_separation_ = this->get_parameter_or("wheel_separation", 0.3906);

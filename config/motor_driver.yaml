@@ -87,6 +87,8 @@ roboclaw_driver:
     m2_d: 0.0                             # Derivative gain  
     m2_qpps: 2437                         # Maximum quadrature pulses per second
 
+    set_logic_battery_voltage_limits: false  # Set true only for controllers that need the 0-14V override (e.g. 2x7A)
+
     # ============================================================================
     # MOTOR ACCELERATION SETTINGS
     # ============================================================================
