@@ -23,13 +23,8 @@ class CmdSetLogicBatteryVoltages : public Cmd {
     roboclaw_.appendToWriteLog(
         "SetLogicBatteryVoltages: min: %u (%.1fV), max: %u (%.1fV), WROTE: ", min_voltage_,
         min_voltage_ / 10.0, max_voltage_, max_voltage_ / 10.0);
-    try {
-      roboclaw_.writeN2(6, roboclaw_.portAddress_, RoboClaw::SETLOGICVOLTAGES,
-                        SetWORDval(min_voltage_), SetWORDval(max_voltage_));
-      return;
-    } catch (...) {
-      RCUTILS_LOG_ERROR("[RoboClaw::CmdSetLogicBatteryVoltages] Uncaught exception !!!");
-    }
+    roboclaw_.writeN2(6, roboclaw_.portAddress_, RoboClaw::SETLOGICVOLTAGES,
+                      SetWORDval(min_voltage_), SetWORDval(max_voltage_));
   }
 
  private:
